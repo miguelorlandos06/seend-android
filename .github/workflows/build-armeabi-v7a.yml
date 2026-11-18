@@ -72,16 +72,26 @@ jobs:
           # Cache del wrapper y de dependencias de Gradle (se reusa entre runs).
           cache: gradle
 
-      # ANDROID_HOME + licencias aceptadas de forma no interactiva.
-      - name: Set up Android SDK
+      # ANDROID_HOME + cmdline-tools + licencias aceptadas. La imagen ubuntu-latest
+      # ya trae un SDK base; esta action garantiza cmdline-tools y acepta las
+      # licencias. NO usamos su input `packages`: en v3 el bloque multiline se
+      # pasa como un único argumento con saltos de línea, y sdkmanager busca un
+      # paquete literal "tools\nplatform-tools\n..." que no existe. Instalamos
+      # los componentes pinned en un paso aparte con argumentos separados.
+      - name: Set up Android SDK (cmdline-tools + licenses)
         uses: android-actions/setup-android@v3
-        with:
-          packages: |
-            tools
-            platform-tools
-            platforms;android-${{ env.COMPILE_SDK }}
-            build-tools;${{ env.BUILD_TOOLS_VERSION }}
-          # sdkmanager acepta las licencias automáticamente con esta action.
+
+      # Instala los componentes pinned como argumentos independientes (sin daemon,
+      # no interactivo). `--licenses` ya fue aceptado por setup-android; lo
+      # repetimos aquí por si sdkmanager pide re-validación tras añadir paquetes.
+      - name: Install pinned SDK packages
+        run: |
+          set -e
+          yes | sdkmanager --licenses >/dev/null 2>&1 || true
+          sdkmanager --install \
+            "platform-tools" \
+            "platforms;android-${COMPILE_SDK}" \
+            "build-tools;${BUILD_TOOLS_VERSION}"
 
       # Sanity: imprime versiones reales para detectar desvíos del pin.
       - name: Show tool versions

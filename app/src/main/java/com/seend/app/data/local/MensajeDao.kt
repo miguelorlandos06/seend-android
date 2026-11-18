@@ -45,7 +45,7 @@ interface MensajeDao {
             de AS otro,
             COUNT(*) AS cuenta
         FROM mensajes
-        WHERE owner = :yo AND para = :yo AND leido = 0
+        WHERE owner = :owner AND para = :yo AND leido = 0
         GROUP BY de
     """)
     fun noLeidosPorUsuario(owner: String, yo: String): Flow<List<NoLeidosRow>>

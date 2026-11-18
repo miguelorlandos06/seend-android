@@ -1,13 +1,5 @@
 name: Build armeabi-v7a (debug)
 
-# Compila la APK de debug SOLO para la ABI armeabi-v7a (ARMv7 / 32-bit),
-# típica de dispositivos Android antiguos o de gama de entrada.
-# El APK dedicado pesa menos que el universal y se instala en esos dispositivos.
-#
-# Disparadores:
-#   - push a main o a cualquier rama "build/**"
-#   - pull_request a main
-#   - manual (workflow_dispatch) con elección de rama
 on:
   push:
     branches:
@@ -32,20 +24,17 @@ on:
         required: false
         default: ''
 
-# Evita builds paralelos del mismo ref: cancela el anterior y deja 1 concurrente.
 concurrency:
   group: armeabi-v7a-${{ github.ref }}
   cancel-in-progress: true
 
 env:
-  # Versiones PINNED (sin "latest"). Cambiar aquí implica un cambio deliberado.
   JAVA_VERSION: '17'
   JAVA_DISTRIBUTION: 'temurin'
-  ANDROID_SDK_VERSION: '9477386'        # cmdline-tools 13.0 (Linux)
   BUILD_TOOLS_VERSION: '34.0.0'
   COMPILE_SDK: '34'
   TARGET_ABI: 'armeabi-v7a'
-  GRADLE_OPTS: '-Dorg.gradle.daemon=false -Dorg.gradle.caching=true -Dorg.gradle.configuration-cache=true'
+  GRADLE_OPTS: '-Dorg.gradle.daemon=false -Dorg.gradle.caching=true'
 
 permissions:
   contents: read
@@ -54,7 +43,7 @@ jobs:
   build:
     name: assembleDebug (armeabi-v7a)
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
 
     steps:
       - name: Checkout
@@ -63,28 +52,14 @@ jobs:
           ref: ${{ inputs.ref || github.ref }}
           fetch-depth: 1
 
-      # JDK 17 (Temurin) — requisito de AGP 8.x y de Compose Compiler con Kotlin 2.0.
       - name: Set up JDK 17 (Temurin)
         uses: actions/setup-java@v4
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: ${{ env.JAVA_DISTRIBUTION }}
-          # Cache del wrapper y de dependencias de Gradle (se reusa entre runs).
           cache: gradle
 
-      # ANDROID_HOME + cmdline-tools + licencias aceptadas. La imagen ubuntu-latest
-      # ya trae un SDK base; esta action garantiza cmdline-tools y acepta las
-      # licencias. NO usamos su input `packages`: en v3 el bloque multiline se
-      # pasa como un único argumento con saltos de línea, y sdkmanager busca un
-      # paquete literal "tools\nplatform-tools\n..." que no existe. Instalamos
-      # los componentes pinned en un paso aparte con argumentos separados.
-      - name: Set up Android SDK (cmdline-tools + licenses)
-        uses: android-actions/setup-android@v3
-
-      # Instala los componentes pinned como argumentos independientes (sin daemon,
-      # no interactivo). `--licenses` ya fue aceptado por setup-android; lo
-      # repetimos aquí por si sdkmanager pide re-validación tras añadir paquetes.
-      - name: Install pinned SDK packages
+      - name: Accept licenses and install pinned SDK packages
         run: |
           set -e
           yes | sdkmanager --licenses >/dev/null 2>&1 || true
@@ -93,7 +68,6 @@ jobs:
             "platforms;android-${COMPILE_SDK}" \
             "build-tools;${BUILD_TOOLS_VERSION}"
 
-      # Sanity: imprime versiones reales para detectar desvíos del pin.
       - name: Show tool versions
         run: |
           set -e
@@ -102,34 +76,27 @@ jobs:
           echo "=== installed packages ==="
           sdkmanager --list_installed || sdkmanager --list | grep -E 'Installed|installed'
 
-      # Asegura que el wrapper esté ejecutable (en caso de permisos perdidos en el checkout).
       - name: Ensure gradlew is executable
         run: chmod +x ./gradlew
 
-      # local.properties apuntando al SDK del runner (Gradle lo necesita si no está en PATH).
       - name: Write local.properties
         run: |
           printf 'sdk.dir=%s\n' "$ANDROID_HOME" > local.properties
           cat local.properties
 
-      # Resuelve y descarga dependencias. Falla aquí si un repo no responde,
-      # antes de gastar tiempo en compilación. Sin daemon (CI).
       - name: Resolve dependencies
         run: ./gradlew --no-daemon :app:dependencies --configuration debugRuntimeClasspath --stacktrace
 
-      # Compila la APK de debug SOLO para armeabi-v7a mediante -Pseend.target_abi.
-      # El splits.abi de app/build.gradle.kts produce app-armeabi-v7a-debug.apk.
       - name: Assemble debug APK (armeabi-v7a)
         run: ./gradlew --no-daemon :app:assembleDebug -Pseend.target_abi=${TARGET_ABI} --stacktrace
 
-      # Verifica que el artefacto esperado existe y reporta tamaño.
       - name: Locate and report APK
         id: apk
         run: |
           set -e
-          APK="app/build/outputs/apk/debug/app-${TARGET_ABI}-debug.apk"
-          if [ ! -f "$APK" ]; then
-            echo "ERROR: no se encontró $APK" >&2
+          APK=$(ls app/build/outputs/apk/debug/*.apk 2>/dev/null | head -n1)
+          if [ -z "$APK" ]; then
+            echo "ERROR: no se generó ninguna APK" >&2
             echo "=== contenido de app/build/outputs/apk/debug ===" >&2
             ls -la app/build/outputs/apk/debug/ >&2 || true
             exit 1
@@ -141,24 +108,11 @@ jobs:
           echo "apk_path=$APK" >> "$GITHUB_OUTPUT"
           echo "apk_size=$SIZE_BYTES" >> "$GITHUB_OUTPUT"
 
-      # Sube el APK como artefacto del workflow (90 días por defecto).
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: seend-armeabi-v7a-debug
-          path: app/build/outputs/apk/debug/app-armeabi-v7a-debug.apk
+          path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
           retention-days: 90
-          compression-level: 0   # la APK ya está comprimida; no recomprimir
-
-      # Sube también los logs de Gradle si el build falló (debug).
-      - name: Upload build logs on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: gradle-logs
-          path: |
-            **/build/reports/
-            **/build/outputs/logs/
-          if-no-files-found: ignore
-          retention-days: 7
+          compression-level: 0

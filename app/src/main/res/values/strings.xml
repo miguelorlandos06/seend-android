@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Seend</string>
+
+    <!-- Auth -->
+    <string name="auth_title">Mensajería</string>
+    <string name="auth_subtitle_login">Inicia sesión para continuar</string>
+    <string name="auth_subtitle_register">Crea una cuenta nueva</string>
+    <string name="auth_tab_login">Iniciar sesión</string>
+    <string name="auth_tab_register">Crear cuenta</string>
+    <string name="auth_username">Nombre de usuario</string>
+    <string name="auth_password">Contraseña</string>
+    <string name="auth_confirm">Confirmar contraseña</string>
+    <string name="auth_username_placeholder">Tu nombre</string>
+    <string name="auth_password_placeholder">Mínimo 4 caracteres</string>
+    <string name="auth_confirm_placeholder">Repite la contraseña</string>
+    <string name="auth_login_btn">Entrar</string>
+    <string name="auth_register_btn">Crear cuenta</string>
+    <string name="auth_error_empty">Completa todos los campos</string>
+    <string name="auth_error_short_password">La contraseña debe tener al menos 4 caracteres</string>
+    <string name="auth_error_password_mismatch">Las contraseñas no coinciden</string>
+    <string name="auth_error_connection">No se pudo conectar al servidor</string>
+
+    <!-- Chat list -->
+    <string name="chats_title">Chats</string>
+    <string name="chats_empty">No tienes conversaciones.\nPulsa el botón + para empezar.</string>
+    <string name="chats_new_chat">Nuevo chat</string>
+
+    <!-- Users -->
+    <string name="users_title">Usuarios</string>
+    <string name="users_online">En línea</string>
+    <string name="users_offline">Desconectados</string>
+    <string name="users_empty">No hay otros usuarios registrados todavía.</string>
+
+    <!-- Conversation -->
+    <string name="conv_input_placeholder">Escribe un mensaje…</string>
+    <string name="conv_send">Enviar</string>
+    <string name="conv_replying_to">Respondiendo a %1$s</string>
+    <string name="conv_you">Tú</string>
+    <string name="conv_typing">Escribiendo…</string>
+    <string name="conv_online">En línea</string>
+    <string name="conv_offline">Desconectado</string>
+    <string name="conv_last_seen_now">Últ. conexión hace un momento</string>
+    <string name="conv_last_seen_min">Últ. conexión hace %1$d min</string>
+    <string name="conv_last_seen_today">Últ. conexión hoy a las %1$s</string>
+    <string name="conv_last_seen_date">Últ. conexión %1$s %2$s</string>
+    <string name="conv_back">Volver</string>
+
+    <!-- Profile -->
+    <string name="profile_title">Mi perfil</string>
+    <string name="profile_other_title">Perfil</string>
+    <string name="profile_name">Nombre</string>
+    <string name="profile_bio">Biografía</string>
+    <string name="profile_bio_placeholder">Cuéntanos algo sobre ti</string>
+    <string name="profile_save">Guardar cambios</string>
+    <string name="profile_logout">Cerrar sesión</string>
+    <string name="profile_avatar_hint">Toca la cámara para cambiar tu foto</string>
+    <string name="profile_avatar_too_big">La foto debe ser menor de 300 KB</string>
+    <string name="profile_avatar_error">Error al subir la foto: %1$s</string>
+    <string name="profile_saved">Perfil actualizado</string>
+
+    <!-- Connection states -->
+    <string name="conn_connecting">Conectando…</string>
+    <string name="conn_connected">En línea</string>
+    <string name="conn_disconnected">Desconectado</string>
+    <string name="conn_reconnecting">Reconectando…</string>
+
+    <!-- Errors -->
+    <string name="err_generic">Error interno</string>
+    <string name="err_credentials">Credenciales incorrectas</string>
+    <string name="err_session_invalid">Sesión no válida</string>
+</resources>

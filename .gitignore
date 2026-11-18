@@ -1,0 +1,25 @@
+*.iml
+.gradle
+/local.properties
+/.idea
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Kotlin
+.kotlin/
+
+# Android Studio
+*.apk
+*.ap_
+*.dex
+*.class
+
+# Logs
+*.log
+logs/
+
+# KSP / generated (sólo cache de build, el .gitignore global ya cubre /build)

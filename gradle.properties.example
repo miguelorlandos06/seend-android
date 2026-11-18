@@ -1,0 +1,7 @@
+# Build settings del proyecto. Opcional: sobrescribe la URL del servidor.
+
+# Para desarrollo local contra el servidor Go corriendo en tu máquina:
+# seend.server_url=http://10.0.2.2:8000
+
+# En producción, usa la URL pública de Render (ya está por defecto en
+# BuildConfig.SERVER_URL dentro de app/build.gradle.kts).

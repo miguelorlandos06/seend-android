@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Tema base XML sólo para el splash y la transición inicial.
+         El resto de la app usa Compose MaterialTheme. -->
+    <style name="Theme.Seend" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowBackground">@color/ic_launcher_background</item>
+    </style>
+
+    <style name="Theme.Seend.Splash" parent="Theme.Seend">
+        <item name="android:windowBackground">@color/ic_launcher_background</item>
+    </style>
+</resources>

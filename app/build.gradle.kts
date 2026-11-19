@@ -29,6 +29,17 @@ android {
             "SERVER_URL",
             "\"https://seend-server-app.onrender.com\""
         )
+
+        // ─── Proxy S3 (relay todus_relay_vps) ───
+        // Activado por defecto: la APK empaqueta el tráfico del protocolo
+        // Seend, lo sella como sobres TDS3 (AES-GCM + HMAC) y lo sube al
+        // bucket s3.todus.cu/stickers; el servidor Go hace pool cada 100ms,
+        // desempaqueta, procesa y devuelve la respuesta al bucket; la APK
+        // también hace pool cada 100ms para capturarla. El secreto debe ser
+        // idéntico al PROXY_SHARED_SECRET del servidor Go.
+        buildConfigField("boolean", "USE_S3_PROXY", "true")
+        buildConfigField("String", "S3_BASE_URL", "\"https://s3.todus.cu/stickers\"")
+        buildConfigField("String", "S3_SHARED_SECRET", "\"d5999ce7de23dba42ff4fc18b1af599c5227a1ba649f20ff9fed8bf61923256e\"")
     }
 
     buildTypes {

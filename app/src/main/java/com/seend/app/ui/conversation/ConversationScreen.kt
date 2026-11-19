@@ -69,7 +69,7 @@ fun ConversationScreen(
                             .fillMaxWidth()
                             .padding(end = 8.dp),
                     ) {
-                        IconButton(onClick = onVerPerfil, modifier = Modifier.padding(4.dp)) {
+                        IconButton(onClick = { onVerPerfil(state.otro) }, modifier = Modifier.padding(4.dp)) {
                             Avatar(url = state.otroAvatar, nombre = state.otro, size = 36.dp)
                         }
                         Column(modifier = Modifier.padding(start = 4.dp)) {

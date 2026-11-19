@@ -2,6 +2,7 @@ package com.seend.app
 
 import android.app.Application
 import com.seend.app.data.local.SeendDatabase
+import com.seend.app.data.repo.ClientIdStore
 import com.seend.app.data.repo.SeendRepository
 
 /**
@@ -21,7 +22,10 @@ class SeendApp : Application() {
         instance = this
         val baseUrl = BuildConfig.SERVER_URL
         val db = SeendDatabase.get(this)
-        repo = SeendRepository(this, db, baseUrl)
+        // clientId estable por dispositivo para el transporte S3 (proxy).
+        // Se genera una vez y se reutiliza; si USE_S3_PROXY=false no se usa.
+        val clientId = ClientIdStore(this).getOrCreateBlocking()
+        repo = SeendRepository(this, db, baseUrl, clientId)
         ServiceLocator.init(repo)
     }
 

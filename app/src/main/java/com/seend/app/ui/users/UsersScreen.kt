@@ -86,7 +86,7 @@ fun UsersScreen(
 private fun Separator(text: String) {
     Text(
         text = text.uppercase(),
-        style = MaterialTheme.labelMedium,
+        style = MaterialTheme.typography.labelMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier
             .fillMaxWidth()

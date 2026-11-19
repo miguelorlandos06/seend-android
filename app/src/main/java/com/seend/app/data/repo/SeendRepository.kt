@@ -24,11 +24,15 @@ import com.seend.app.data.model.OutPedirUsuarios
 import com.seend.app.data.model.OutRegistro
 import com.seend.app.data.model.OutValidarSesion
 import com.seend.app.data.model.ServerMensaje
+import com.seend.app.BuildConfig
 import com.seend.app.data.remote.ApiClient
 import com.seend.app.data.remote.ApiException
 import com.seend.app.data.remote.ConnState
+import com.seend.app.data.remote.MessageTransport
 import com.seend.app.data.remote.WebSocketClient
 import com.seend.app.data.remote.buildOkHttp
+import com.seend.app.data.remote.s3.S3TransportClient
+import com.seend.app.data.remote.send
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -76,11 +80,27 @@ class SeendRepository(
     private val ctx: Context,
     private val db: SeendDatabase,
     private val baseUrl: String,
+    private val clientId: String,
 ) {
     companion object { private const val TAG = "SeendRepo" }
 
     private val okHttp = buildOkHttp()
-    private val ws = WebSocketClient(baseUrl, okHttp)
+
+    // Transporte de mensajería. Por defecto usa el proxy S3 (relay
+    // todus_relay_vps) cuando BuildConfig.USE_S3_PROXY = true; si no,
+    // WebSocket directo al servidor Go. Ambos implementan MessageTransport
+    // y exponen los mismos eventos/estado, así el resto del repo no cambia.
+    private val ws: MessageTransport =
+        if (BuildConfig.USE_S3_PROXY) {
+            S3TransportClient(
+                httpClient = okHttp,
+                baseUrl = BuildConfig.S3_BASE_URL,
+                sharedSecretHex = BuildConfig.S3_SHARED_SECRET,
+                clientId = clientId,
+            )
+        } else {
+            WebSocketClient(baseUrl, okHttp)
+        }
     private val api = ApiClient(baseUrl, okHttp)
     private val sessionStore = SessionStore(ctx)
     private val msgDao = db.mensajeDao()

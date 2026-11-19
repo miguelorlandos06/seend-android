@@ -49,7 +49,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 fun MyProfileScreen(
     onBack: () -> Unit,
     vm: MyProfileViewModel = viewModel(
-        factory = viewModelFactory { initializer { MyProfileViewModel(androidApplication()) } },
+        factory = viewModelFactory { initializer { MyProfileViewModel(com.seend.app.SeendApp.instance) } },
     ),
 ) {
     val state by vm.ui.collectAsState()

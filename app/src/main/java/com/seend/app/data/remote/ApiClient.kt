@@ -3,6 +3,7 @@ package com.seend.app.data.remote
 import com.seend.app.data.model.HttpError
 import com.seend.app.data.model.UploadPrepareRequest
 import com.seend.app.data.model.UploadPrepareResponse
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient

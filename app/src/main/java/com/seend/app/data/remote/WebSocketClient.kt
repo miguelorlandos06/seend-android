@@ -56,7 +56,7 @@ sealed interface ConnState {
 class WebSocketClient(
     private val baseUrl: String,
     private val httpClient: OkHttpClient,
-) {
+) : MessageTransport {
     companion object {
         private const val TAG = "SeendWS"
         private const val PATH = "/ws"
@@ -70,24 +70,17 @@ class WebSocketClient(
     private var manualClose = false
     private var reconnectAttempts = 0
 
-    private val json = Json {
-        ignoreUnknownKeys = true
-        isLenient = true
-        coerceInputValues = true
-        explicitNulls = false
-    }
-
     private val _events = MutableSharedFlow<InEvento>(
         replay = 0,
         extraBufferCapacity = 64,
     )
-    val events: SharedFlow<InEvento> = _events.asSharedFlow()
+    override val events: SharedFlow<InEvento> = _events.asSharedFlow()
 
     private val _state = MutableSharedFlow<ConnState>(extraBufferCapacity = 8)
-    val state: SharedFlow<ConnState> = _state.asSharedFlow()
+    override val state: SharedFlow<ConnState> = _state.asSharedFlow()
 
     /** Conecta al WebSocket. Idempotente si ya está conectado. */
-    fun connect() {
+    override fun connect() {
         if (ws != null) return
         manualClose = false
         _state.tryEmit(ConnState.Connecting)
@@ -98,7 +91,7 @@ class WebSocketClient(
     }
 
     /** Cierra limpiamente (sin reintentar reconexión). */
-    fun disconnect() {
+    override fun disconnect() {
         manualClose = true
         connectedJob?.cancel()
         ws?.close(NORMAL_CLOSURE, "client close")
@@ -106,11 +99,10 @@ class WebSocketClient(
         scope.launch { _state.emit(ConnState.Disconnected) }
     }
 
-    /** Envía un objeto serializable como JSON. Devuelve false si no hay conexión. */
-    inline fun <reified T> send(value: T): Boolean {
+    /** Envía un JSON ya serializado al WebSocket. false si no hay conexión. */
+    override fun sendJson(jsonString: String): Boolean {
         val w = ws ?: return false
-        val str = json.encodeToString(value)
-        return w.send(str)
+        return w.send(jsonString)
     }
 
     /** Convierte http(s):// a ws(s):// */
@@ -171,32 +163,12 @@ class WebSocketClient(
     }
 
     private fun handleText(text: String) {
-        try {
-            val element = json.parseToJsonElement(text)
-            val tipoObj = json.decodeFromJsonElement<SobreTipo>(element)
-            val evento: InEvento = when (tipoObj.tipo) {
-                "auth_ok" -> InEvento.AuthOk(json.decodeFromJsonElement(element))
-                "sesion_valida" -> InEvento.SesionValida(json.decodeFromJsonElement<InSesionValida>(element))
-                "sesion_invalida" -> InEvento.SesionInvalida
-                "error" -> InEvento.Error(json.decodeFromJsonElement<InError>(element))
-                "pendientes" -> InEvento.Pendientes(json.decodeFromJsonElement<InPendientes>(element))
-                "usuarios" -> InEvento.Usuarios(json.decodeFromJsonElement<InUsuarios>(element))
-                "conversacion" -> InEvento.Conversacion(json.decodeFromJsonElement<InConversacion>(element))
-                "mensaje" -> InEvento.Mensaje(json.decodeFromJsonElement<InMensaje>(element))
-                "escribiendo" -> InEvento.Escribiendo(json.decodeFromJsonElement<InEscribiendo>(element))
-                "presencia" -> InEvento.Presencia(json.decodeFromJsonElement<InPresencia>(element))
-                "perfil" -> InEvento.Perfil(json.decodeFromJsonElement<InPerfil>(element))
-                "perfil_actualizado" -> InEvento.PerfilActualizado(json.decodeFromJsonElement<InPerfilActualizado>(element))
-                "perfil_actualizado_otro" -> InEvento.PerfilActualizadoOtro(json.decodeFromJsonElement<InPerfilActualizadoOtro>(element))
-                else -> {
-                    val raw: JsonElement? = if (element.toString().length <= 8192) element else null
-                    InEvento.Desconocido(tipoObj.tipo, raw)
-                }
-            }
-            _events.tryEmit(evento)
-        } catch (t: Throwable) {
-            Log.w(TAG, "Error parseando mensaje: ${t.message}")
+        val evento = parseEvento(text)
+        if (evento == null) {
+            Log.w(TAG, "Error parseando mensaje")
+            return
         }
+        _events.tryEmit(evento)
     }
 }
 

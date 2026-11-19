@@ -28,14 +28,14 @@ interface MensajeDao {
                 CASE WHEN de = :yo THEN para ELSE de END AS otro,
                 MAX(ts) AS max_ts
             FROM mensajes
-            WHERE owner = :yo AND (de = :yo OR para = :yo)
+            WHERE owner = :owner AND (de = :yo OR para = :yo)
             GROUP BY otro
         ) t
         ON (
             (m.de = :yo AND m.para = t.otro) OR
             (m.para = :yo AND m.de = t.otro)
         ) AND m.ts = t.max_ts
-        WHERE m.owner = :yo
+        WHERE m.owner = :owner
     """)
     fun ultimosMensajes(owner: String, yo: String): Flow<List<MensajeEntity>>
 
